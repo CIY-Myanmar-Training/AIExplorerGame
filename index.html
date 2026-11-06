@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="my">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI Explorer</title>
+<link rel="stylesheet" href="assets/common.css">
+<style>
+  .hero{display:flex;align-items:center;gap:18px;color:#fff;margin:8px 0 28px}
+  .hero .mark{flex:none}
+  .hero h2{margin:0;font-size:52px;line-height:1;letter-spacing:.5px}
+  .hero .sub{font-size:19px;opacity:.95;margin-top:6px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:18px}
+  .game{display:grid;grid-template-columns:76px 1fr;gap:16px;text-decoration:none;color:var(--ink);background:var(--paper);
+    border:2px solid var(--ink);border-radius:16px;box-shadow:0 4px 0 var(--ink);padding:18px;transition:transform .12s,box-shadow .12s}
+  .game:hover{transform:translateY(-2px);box-shadow:0 6px 0 var(--ink)}
+  .tile{width:76px;height:76px;border-radius:14px;display:flex;align-items:center;justify-content:center;border:2px solid var(--ink)}
+  .tile svg{width:52px;height:52px}
+  .body{display:flex;flex-direction:column;gap:6px;min-width:0}
+  .no{font-size:13px;letter-spacing:1.5px;opacity:.55;font-weight:700}
+  .game h3{margin:0;font-size:22px;line-height:1.25}
+  .game p{margin:0;font-size:16px;opacity:.8;line-height:1.5}
+  .meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;font-size:13px}
+  .meta span{border:1.5px solid var(--ink);border-radius:999px;padding:2px 10px;white-space:nowrap}
+  .meta .age{background:var(--ink);color:#fff}
+  .meta .camtag{border-color:var(--cyan);color:#13708C}
+  .meta .topic{border-color:transparent;padding-left:2px;opacity:.6}
+  .promo{display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center;background:var(--ink);color:#fff;border-radius:16px;padding:20px 24px;margin-top:26px;font-size:17px}
+  .promo b{font-size:21px;color:#FFE16A}
+  .promo .contact{margin-top:4px;font-size:15px;opacity:.85}
+  .foot{color:#fff;text-align:center;margin-top:22px;font-size:14px;opacity:.9}
+  @media (max-width:560px){.hero h2{font-size:38px}.game{grid-template-columns:60px 1fr}.tile{width:60px;height:60px}.tile svg{width:42px;height:42px}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <h1 style="font-size:17px;font-weight:500;opacity:.95">CIY Club Myanmar × ScopeIT Education</h1>
+  <div class="lang"><button data-l="my">မြန်မာ</button><button data-l="en">English</button></div>
+</header>
+
+<div class="wrap">
+  <div class="hero">
+    <svg class="mark" width="72" height="72" viewBox="0 0 72 72" aria-hidden="true">
+      <rect x="2" y="2" width="68" height="68" rx="16" fill="#1D2766"/>
+      <g fill="#fff">
+        <rect x="16" y="16" width="10" height="10" rx="2"/><rect x="31" y="16" width="10" height="10" rx="2" fill="#22AED6"/><rect x="46" y="16" width="10" height="10" rx="2"/>
+        <rect x="16" y="31" width="10" height="10" rx="2" fill="#E5307A"/><rect x="31" y="31" width="10" height="10" rx="2"/><rect x="46" y="31" width="10" height="10" rx="2" fill="#FFE16A"/>
+        <rect x="16" y="46" width="10" height="10" rx="2"/><rect x="31" y="46" width="10" height="10" rx="2" fill="#3BB273"/><rect x="46" y="46" width="10" height="10" rx="2"/>
+      </g>
+    </svg>
+    <div>
+      <h2>AI Explorer</h2>
+      <div class="sub" data-t="sub"></div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <a class="game" href="pose-pilot.html">
+      <div class="tile" style="background:#D3F0F9"><svg viewBox="0 0 48 48" fill="none" stroke="#1D2766" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="24" cy="11" r="4.5" fill="#fff"/><path d="M24 16v14M24 20 15 10M24 20l9-10M24 30l-6 10M24 30l6 10"/>
+        <path d="M9 18c-2 2-2 6 0 8M39 18c2 2 2 6 0 8" stroke="#22AED6"/></svg></div>
+      <div class="body"><span class="no">01</span><h3 data-t="g1"></h3><p data-t="g1d"></p>
+        <div class="meta"><span class="age" data-t="a1"></span><span data-t="time"></span><span class="camtag" data-t="cam"></span><span class="topic" data-t="t1"></span></div></div>
+    </a>
+    <a class="game" href="trash-trainer.html">
+      <div class="tile" style="background:#DDF3E6"><svg viewBox="0 0 48 48" fill="none" stroke="#1D2766" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M11 14h26M20 14v-3h8v3"/><path d="M14 14l2.5 25h15L34 14" fill="#fff"/>
+        <path d="M28.5 27a4.5 4.5 0 1 1-1.6-3.6" stroke="#3BB273"/><path d="M27.5 20.5v3.2h-3.2" stroke="#3BB273"/></svg></div>
+      <div class="body"><span class="no">02</span><h3 data-t="g2"></h3><p data-t="g2d"></p>
+        <div class="meta"><span class="age" data-t="a2"></span><span data-t="time"></span><span class="topic" data-t="t2"></span></div></div>
+    </a>
+    <a class="game" href="word-machine.html">
+      <div class="tile" style="background:#FFF0C2"><svg viewBox="0 0 48 48" fill="none" stroke="#1D2766" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M8 12a4 4 0 0 1 4-4h24a4 4 0 0 1 4 4v16a4 4 0 0 1-4 4H20l-7 6v-6h-1a4 4 0 0 1-4-4z" fill="#fff"/>
+        <path d="M14 15h18" stroke="#E5307A" stroke-width="4"/><path d="M14 21h12" stroke="#22AED6" stroke-width="4"/><path d="M14 27h6" stroke="#F28C28" stroke-width="4"/></svg></div>
+      <div class="body"><span class="no">03</span><h3 data-t="g3"></h3><p data-t="g3d"></p>
+        <div class="meta"><span class="age" data-t="a3"></span><span data-t="time"></span><span class="topic" data-t="t3"></span></div></div>
+    </a>
+    <a class="game" href="liar-bot.html">
+      <div class="tile" style="background:#FBDCE8"><svg viewBox="0 0 48 48" fill="none" stroke="#1D2766" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 16v-5"/><circle cx="21" cy="9" r="2"/><rect x="9" y="16" width="24" height="20" rx="5" fill="#fff"/>
+        <circle cx="16" cy="25" r="2" fill="#1D2766"/><circle cx="26" cy="25" r="2" fill="#1D2766"/><path d="M16 31h10"/>
+        <circle cx="37" cy="13" r="7" fill="#E5307A" stroke="#1D2766"/><path d="M37 9.5v4" stroke="#fff"/><path d="M37 16.6v.1" stroke="#fff"/></svg></div>
+      <div class="body"><span class="no">04</span><h3 data-t="g4"></h3><p data-t="g4d"></p>
+        <div class="meta"><span class="age" data-t="a4"></span><span data-t="time"></span><span class="topic" data-t="t4"></span></div></div>
+    </a>
+    <a class="game" href="stranger-chat.html">
+      <div class="tile" style="background:#E2E5F7"><svg viewBox="0 0 48 48" fill="none" stroke="#1D2766" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M6 10a3 3 0 0 1 3-3h20a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H15l-5 4v-4H9a3 3 0 0 1-3-3z" fill="#fff"/>
+        <path d="M12 13h14M12 19h9"/>
+        <path d="M33 21l9 3v6c0 6-4 9-9 11-5-2-9-5-9-11v-6z" fill="#22AED6"/><path d="M29.5 31l2.5 2.5 5-5" stroke="#fff"/></svg></div>
+      <div class="body"><span class="no">05</span><h3 data-t="g5"></h3><p data-t="g5d"></p>
+        <div class="meta"><span class="age" data-t="a5"></span><span data-t="time"></span><span class="topic" data-t="t5"></span></div></div>
+    </a>
+    <a class="game" href="real-or-ai.html">
+      <div class="tile" style="background:#FFE3CC"><svg viewBox="0 0 48 48" fill="none" stroke="#1D2766" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="6" y="8" width="28" height="24" rx="3" fill="#fff"/><path d="M6 27l8-8 6 6 4-4 10 10"/><circle cx="26" cy="15" r="2.5" fill="#F28C28" stroke="none"/>
+        <circle cx="32" cy="30" r="7" fill="#fff"/><path d="M37 35l6 6"/></svg></div>
+      <div class="body"><span class="no">06</span><h3 data-t="g6"></h3><p data-t="g6d"></p>
+        <div class="meta"><span class="age" data-t="a6"></span><span data-t="time1"></span><span class="topic" data-t="t6"></span></div></div>
+    </a>
+  </div>
+
+  <div class="promo">
+    <svg width="54" height="54" viewBox="0 0 48 48" fill="none" stroke="#FFE16A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M16 14 6 24l10 10M32 14l10 10-10 10M27 10l-6 28"/></svg>
+    <div><b data-t="promoTitle"></b><br><span data-t="promoText"></span><div class="contact" id="contact"></div></div>
+  </div>
+  <div class="foot"><span data-t="credit"></span> · CIY Club Myanmar × ScopeIT Education</div>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+const T = {
+  t1: { en: "Machine learning", my: "Machine learning" },
+  t2: { en: "Training data", my: "သင်ကြားရေး ဒေတာ" },
+  t3: { en: "How AI writes", my: "AI စာရေးပုံ" },
+  t4: { en: "Checking AI answers", my: "AI အဖြေ စစ်ဆေးခြင်း" },
+  t5: { en: "Online safety", my: "အွန်လိုင်း ဘေးကင်းရေး" },
+  t6: { en: "AI pictures", my: "AI ပုံများ" },
+  a1: { en: "Ages 6–14", my: "အသက် ၆–၁၄" },
+  a2: { en: "Ages 6–12", my: "အသက် ၆–၁၂" },
+  a3: { en: "Ages 9–14", my: "အသက် ၉–၁၄" },
+  a4: { en: "Ages 7–14", my: "အသက် ၇–၁၄" },
+  a5: { en: "Ages 7–12", my: "အသက် ၇–၁၂" },
+  a6: { en: "Ages 8–14", my: "အသက် ၈–၁၄" },
+  time: { en: "5–8 min", my: "၅–၈ မိနစ်" },
+  time1: { en: "1 min", my: "၁ မိနစ်" },
+  cam: { en: "Camera", my: "ကင်မရာ" },
+  promoTitle: { en: "Want to build your own AI?", my: "ကိုယ်ပိုင် AI တည်ဆောက်ချင်လား?" },
+  promoText: { en: "Coders at CIY Club Myanmar and ScopeIT Education build AI projects like these: chatbots, image recognition, AI games and more.",
+               my: "CIY Club Myanmar နဲ့ ScopeIT Education က coder တွေက ဒီလို AI project တွေ ကိုယ်တိုင်တည်ဆောက်ကြတယ် — chatbot၊ ပုံမှတ်မိတဲ့ AI၊ AI ဂိမ်း စသဖြင့်။" },
+  credit: { en: "Created by Coach Penny", my: "ဖန်တီးသူ - Coach Penny" },
+  sub: { en: "Six AI missions. Finish one and you get a secret code.",
+         my: "AI မစ်ရှင် ၆ ခု။ တစ်ခုပြီးတိုင်း လျှို့ဝှက်ကုဒ် ရမယ်။" },
+  g1: { en: "Pose Pilot", my: "ကိုယ်ဟန်နဲ့ ငှက်မောင်း" },
+  g1d:{ en: "Teach the computer your arm moves, then fly a bird to clean the ocean.",
+        my: "ကွန်ပျူတာကို သင့်လက်လှုပ်ရှားမှု သင်ပေးပြီး ငှက်ကို မောင်းကာ ပင်လယ်ကို သန့်ရှင်းပါ။" },
+  g2: { en: "Trash Island Trainer", my: "အမှိုက်ကျွန်း စက်ရုပ်သင်တန်း" },
+  g2d:{ en: "You are the teacher. Teach a robot which trash can be recycled.",
+        my: "သင်က ဆရာပါ။ ဘယ်အမှိုက်က ပြန်သုံးလို့ရလဲ ဆိုတာ စက်ရုပ်ကို သင်ပေးပါ။" },
+  g3: { en: "The Word Machine", my: "စကားလုံး စက်" },
+  g3d:{ en: "See how AI guesses the next word, and steer it to write a silly story.",
+        my: "AI က နောက်စကားလုံးကို ဘယ်လိုခန့်မှန်းလဲ ကြည့်ပြီး ပုံပြင်ရယ်ရယ်လေး ရေးခိုင်းပါ။" },
+  g4: { en: "Catch the Liar Bot", my: "လိမ်တတ်တဲ့ Bot ကို ဖမ်းပါ" },
+  g4d:{ en: "The bot always sounds sure. Some answers are wrong. Can you spot them?",
+        my: "Bot က အမြဲ သေချာသလို ပြောတယ်။ တချို့အဖြေတွေ မှားတယ်။ ရှာနိုင်မလား?" },
+  g5: { en: "Stranger in the Chat", my: "Chat ထဲက သူစိမ်း" },
+  g5d:{ en: "Someone friendly starts asking questions online. Make safe choices!",
+        my: "အွန်လိုင်းမှာ ဖော်ရွေတဲ့သူတစ်ယောက် မေးခွန်းတွေ စမေးလာတယ်။ ဘေးကင်းတဲ့ ရွေးချယ်မှု လုပ်ပါ!" },
+  g6: { en: "Real or AI?", my: "အစစ်လား AI လား?" },
+  g6d:{ en: "Is the picture real or made by AI? Beat today’s high score!",
+        my: "ဒီပုံက အစစ်လား AI ဆွဲတာလား? ဒီနေ့ အမှတ်အများဆုံးကို ကျော်ပါ!" }
+};
+document.getElementById("contact").textContent = BRAND.contact;
+document.querySelectorAll(".lang button").forEach(b => b.onclick = () => setLang(b.dataset.l, T));
+applyLang(T);
+</script>
+</body>
+</html>

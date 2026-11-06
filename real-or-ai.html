@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="my">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Real or AI</title>
+<link rel="stylesheet" href="assets/common.css">
+<style>
+  .start{display:grid;grid-template-columns:1.2fr 1fr;gap:18px}
+  @media (max-width:860px){.start{grid-template-columns:1fr}}
+  .board ol{padding-left:26px;margin:6px 0 0} .board li{font-size:20px;margin:4px 0}
+  .board li b{float:right}
+  .name{font-size:22px;padding:10px 14px;border:3px solid var(--ink);border-radius:12px;width:100%;font-family:inherit;margin:8px 0 14px}
+  .play{display:grid;grid-template-columns:1fr 240px;gap:18px;align-items:start}
+  @media (max-width:860px){.play{grid-template-columns:1fr}}
+  .pic{position:relative;background:#111;border:4px solid var(--ink);border-radius:18px;overflow:hidden;height:56vh;min-height:320px;display:flex;align-items:center;justify-content:center}
+  .pic img{max-width:100%;max-height:100%;object-fit:contain}
+  .flash{position:absolute;inset:0;display:none;align-items:center;justify-content:center;font-size:44px;font-weight:700;color:#fff}
+  .flash.ok{display:flex;background:rgba(59,178,115,.75)} .flash.bad{display:flex;background:rgba(224,67,67,.75)}
+  .answer{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+  .answer .btn{font-size:28px;padding:20px}
+  .stat{text-align:center;margin-bottom:14px}
+  .stat .v{font-size:54px;font-weight:700;line-height:1}
+  .stat small{font-size:15px}
+  .timer{height:18px;border:2px solid var(--ink);border-radius:999px;overflow:hidden;background:#EEE6C8}
+  .timer i{display:block;height:100%;background:var(--pink);width:100%}
+  .tips li{font-size:17px;margin:4px 0}
+  .setup{background:#FDEDED;border:3px dashed var(--red);border-radius:16px;padding:18px;font-size:17px}
+  .reset{font-size:13px;opacity:.6;background:none;border:0;text-decoration:underline;cursor:pointer;color:var(--ink);font-family:inherit;margin-top:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="mission"><span class="tag" data-t="mission"></span><span id="missionText"></span></div>
+
+  <div class="setup hidden" id="setup"></div>
+
+  <div class="start" id="start">
+    <div class="panel">
+      <span class="step-label" data-t="howLabel"></span>
+      <h2 data-t="howTitle"></h2>
+      <p data-t="howText"></p>
+      <label data-t="nameLabel" style="font-size:17px"></label>
+      <input class="name" id="name" maxlength="14" autocomplete="off">
+      <button class="btn pink big" id="go" data-t="goBtn"></button>
+    </div>
+    <div class="panel board">
+      <span class="step-label" data-t="boardLabel"></span>
+      <ol id="board"></ol>
+      <button class="reset" id="reset" data-t="resetBtn"></button>
+    </div>
+  </div>
+
+  <div class="play hidden" id="play">
+    <div>
+      <div class="pic"><img id="img" alt=""><div class="flash" id="flash"></div></div>
+      <div class="answer">
+        <button class="btn green" id="btnReal" data-t="realBtn"></button>
+        <button class="btn pink" id="btnAI" data-t="aiBtn"></button>
+      </div>
+      <p class="center muted" style="margin-top:10px;font-size:15px" data-t="keys"></p>
+    </div>
+    <div class="panel">
+      <div class="stat"><div class="v" id="time">60</div><small data-t="secs"></small></div>
+      <div class="timer"><i id="tbar"></i></div>
+      <div class="stat" style="margin-top:18px"><div class="v" id="score">0</div><small data-t="correct"></small></div>
+    </div>
+  </div>
+
+  <div class="panel hidden" id="end">
+    <h2 id="endTitle"></h2>
+    <p data-t="tipsTitle"></p>
+    <ul class="tips">
+      <li data-t="tip1"></li><li data-t="tip2"></li><li data-t="tip3"></li><li data-t="tip4"></li>
+    </ul>
+    <button class="btn pink big" onclick="location.reload()" data-t="next"></button>
+  </div>
+</div>
+
+<script src="assets/common.js"></script>
+<script src="assets/realai-images.js"></script>
+<script>
+const T = {
+  title: { en: "Real or AI?", my: "အစစ်လား AI လား?" },
+  howLabel: { en: "HOW TO PLAY", my: "ကစားနည်း" },
+  howTitle: { en: "You have 60 seconds!", my: "စက္ကန့် ၆၀ ရမယ်!" },
+  howText: { en: "A picture appears. Is it a real photo, or did AI make it? Answer as many as you can.",
+             my: "ပုံတစ်ပုံ ပေါ်လာမယ်။ ဓာတ်ပုံအစစ်လား၊ AI ဆွဲထားတာလား? တတ်နိုင်သမျှ များများ ဖြေပါ။" },
+  nameLabel: { en: "Your nickname (for the score board):", my: "သင့်နာမည်ပြောင် (အမှတ်ဘုတ်အတွက်):" },
+  goBtn: { en: "▶ Start!", my: "▶ စမယ်!" },
+  boardLabel: { en: "🏆 TODAY'S TOP SCORES", my: "🏆 ဒီနေ့ အမှတ်အများဆုံး" },
+  resetBtn: { en: "volunteer: clear board", my: "စေတနာ့ဝန်ထမ်း: ဘုတ်ရှင်းမယ်" },
+  realBtn: { en: "📷 Real", my: "📷 အစစ်" },
+  aiBtn: { en: "🤖 AI", my: "🤖 AI" },
+  keys: { en: "Keyboard: ← Real · → AI", my: "ကီးဘုတ်: ← အစစ် · → AI" },
+  secs: { en: "seconds left", my: "စက္ကန့် ကျန်" },
+  correct: { en: "correct", my: "မှန်" },
+  tipsTitle: { en: "Clues that a picture might be AI-made:", my: "ပုံတစ်ပုံ AI ဆွဲထားနိုင်တဲ့ အချက်တွေ:" },
+  tip1: { en: "✋ Strange hands or fingers", my: "✋ လက် ဒါမှမဟုတ် လက်ချောင်း ထူးဆန်းတာ" },
+  tip2: { en: "🔤 Letters and signs that don't make sense", my: "🔤 နားမလည်နိုင်တဲ့ စာလုံးနဲ့ ဆိုင်းဘုတ်တွေ" },
+  tip3: { en: "✨ Too smooth, too shiny, too perfect", my: "✨ ချောလွန်း၊ ပြောင်လွန်း၊ ပြီးပြည့်စုံလွန်းတာ" },
+  tip4: { en: "🧱 Backgrounds where things melt into each other", my: "🧱 နောက်ခံမှာ အရာတွေ တစ်ခုနဲ့တစ်ခု ပေါင်းအရည်ပျော်နေသလို ဖြစ်တာ" },
+  next: { en: "Next player ▶", my: "နောက်ကစားသူ ▶" }
+};
+
+const DAY = new Date().toISOString().slice(0, 10);
+const KEY = "sff-realai-" + DAY;
+function getBoard() { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch (e) { return []; } }
+function saveBoard(b) { try { localStorage.setItem(KEY, JSON.stringify(b)); } catch (e) {} }
+function drawBoard() {
+  const b = getBoard();
+  document.getElementById("board").innerHTML = b.length
+    ? b.slice(0, 8).map(r => `<li>${r.n.replace(/[<>&]/g, "")} <b>${r.s}</b></li>`).join("")
+    : `<li class="muted">${L({ en: "No scores yet. Be the first!", my: "အမှတ် မရှိသေးဘူး။ ပထမဆုံး ဖြစ်လိုက်ပါ!" })}</li>`;
+}
+function drawMission() {
+  document.getElementById("missionText").textContent = L({
+    en: `Get ${REALAI_TARGET} or more right in 60 seconds.`,
+    my: `စက္ကန့် ၆၀ အတွင်း ${REALAI_TARGET} ခု နဲ့အထက် မှန်အောင် ဖြေပါ။`
+  });
+}
+
+const pool = [...REAL_IMAGES.map(src => ({ src, ai: false })), ...AI_IMAGES.map(src => ({ src, ai: true }))];
+let deck = [], cur = null, score = 0, left = 60, timer = null, locked = false, playing = false;
+
+function nextPic() {
+  if (!deck.length) deck = shuffle(pool.slice());
+  cur = deck.pop();
+  document.getElementById("img").src = cur.src;
+  locked = false;
+}
+function answer(saysAI) {
+  if (!playing || locked || !cur) return;
+  locked = true;
+  const ok = saysAI === cur.ai;
+  if (ok) score++;
+  document.getElementById("score").textContent = score;
+  const f = document.getElementById("flash");
+  f.className = "flash " + (ok ? "ok" : "bad");
+  f.textContent = (ok ? "✓ " : "✗ ") + (cur.ai ? "🤖 AI" : L({ en: "📷 Real", my: "📷 အစစ်" }));
+  setTimeout(() => { f.className = "flash"; if (playing) nextPic(); }, 650);
+}
+function start() {
+  document.getElementById("start").classList.add("hidden");
+  document.getElementById("play").classList.remove("hidden");
+  score = 0; left = 60; playing = true;
+  nextPic();
+  const t0 = Date.now();
+  timer = setInterval(() => {
+    left = Math.max(0, 60 - (Date.now() - t0) / 1000);
+    document.getElementById("time").textContent = Math.ceil(left);
+    document.getElementById("tbar").style.width = (left / 60 * 100) + "%";
+    if (left <= 0) end();
+  }, 100);
+}
+function end() {
+  clearInterval(timer); playing = false;
+  const name = (document.getElementById("name").value || "?").trim().slice(0, 14) || "?";
+  const b = getBoard(); b.push({ n: name, s: score }); b.sort((a, c) => c.s - a.s); saveBoard(b.slice(0, 20));
+  document.getElementById("play").classList.add("hidden");
+  document.getElementById("end").classList.remove("hidden");
+  document.getElementById("endTitle").textContent = L({ en: `You got ${score} right!`, my: `${score} ခု မှန်တယ်!` });
+  if (score >= REALAI_TARGET) setTimeout(() => showWin("realai", {
+    en: "AI can make pictures that look real. Before you believe or share a picture, look closely and ask: who made this?",
+    my: "AI က အစစ်လိုပဲ ထင်ရတဲ့ ပုံတွေ ဆွဲနိုင်တယ်။ ပုံတစ်ပုံကို မယုံခင်၊ မမျှဝေခင် သေချာကြည့်ပြီး ‘ဒါ ဘယ်သူလုပ်ထားတာလဲ’ လို့ မေးပါ။"
+  }, "🔍"), 600);
+}
+
+document.getElementById("go").onclick = start;
+document.getElementById("btnReal").onclick = () => answer(false);
+document.getElementById("btnAI").onclick = () => answer(true);
+document.addEventListener("keydown", e => { if (e.key === "ArrowLeft") answer(false); if (e.key === "ArrowRight") answer(true); });
+document.getElementById("reset").onclick = () => { if (confirm("Clear today's scores?")) { saveBoard([]); drawBoard(); } };
+
+buildTopbar(T, "title", () => { drawBoard(); drawMission(); });
+drawBoard(); drawMission();
+
+if (REAL_IMAGES.length < 5 || AI_IMAGES.length < 5) {
+  const s = document.getElementById("setup");
+  s.classList.remove("hidden");
+  s.innerHTML = `<b>⚙️ Setup needed (volunteer)</b><br>
+    This game needs pictures. Put real photos in <code>images/real/</code> and AI-made pictures in <code>images/ai/</code>,
+    then list the file names in <code>assets/realai-images.js</code>. At least 5 of each to start, 25+ of each is better.
+    <br><br>ဒီဂိမ်းအတွက် ပုံတွေလိုတယ်။ ဓာတ်ပုံအစစ်ကို <code>images/real/</code>၊ AI ပုံကို <code>images/ai/</code> ထဲထည့်ပြီး
+    ဖိုင်နာမည်တွေကို <code>assets/realai-images.js</code> မှာ ရေးပါ။`;
+  document.getElementById("go").disabled = true;
+}
+</script>
+</body>
+</html>

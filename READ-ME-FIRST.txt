@@ -1,0 +1,48 @@
+AI EXPLORER — 6 AI mission games
+CIY Club Myanmar × ScopeIT Education · Created by Coach Penny
+=========================================================
+
+SETTING UP A LAPTOP (5 minutes)
+1. Copy the whole "ai-explorer" folder onto the laptop. Keep all files together.
+2. Open the folder and double-click  index.html  (use Google Chrome).
+3. Click the game you want to use. Press F11 for full screen.
+4. No internet needed. Everything runs from the folder.
+
+POSE PILOT (camera booth)
+- The first time, Chrome asks to use the camera. Click "Allow".
+- If the camera doesn't start: click the camera icon in the address bar,
+  choose "Always allow", then reload the page.
+- Best results: plain wall behind the child, good light, child stands
+  1–2 steps back so arms are visible.
+
+REAL OR AI? (needs pictures before the event)
+- Put real photos in        images/real/
+- Put AI-made pictures in   images/ai/
+- Open  assets/realai-images.js  in Notepad and list each file name.
+- At least 5 of each to start; 25+ of each is better.
+- Tip: make pairs on the same subject (a real market photo + an
+  AI market picture). Avoid photos showing children's faces.
+- The day's score board stays on that laptop. A small link under the
+  board lets volunteers clear it.
+
+SECRET CODES (volunteers only — don't print on child materials)
+  1 Pose Pilot ............ SKYBIRD
+  2 Trash Island Trainer .. RECYCLE
+  3 Word Machine .......... NEXTWORD
+  4 Catch the Liar Bot .... FACTCHECK
+  5 Stranger in the Chat .. SAFEHERO
+  6 Real or AI? ........... SHARPEYES
+To change them, edit the CODES list at the top of assets/common.js.
+
+BETWEEN CHILDREN
+Press "Next player" on the win screen. If a child walks away mid-game,
+press F5 to restart.
+
+LANGUAGE
+Burmese is the default. The switch at the top right changes to English,
+and the laptop remembers the choice.
+
+MARKETING LINE
+The menu and every win screen show a short "learn with CIY Club Myanmar &
+ScopeIT Education" message. To change the contact line, edit BRAND at the
+top of assets/common.js.

@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="my">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Catch the Liar Bot</title>
+<link rel="stylesheet" href="assets/common.css">
+<style>
+  .levels{display:grid;grid-template-columns:1fr 1fr;gap:18px;max-width:760px;margin:20px auto}
+  .lvl{font-size:24px;padding:26px 14px;flex-direction:column}
+  .lvl span{font-size:16px;font-weight:500;opacity:.9}
+  .game{display:grid;grid-template-columns:320px 1fr;gap:18px}
+  @media (max-width:900px){.game{grid-template-columns:1fr}}
+  .qs{display:flex;flex-direction:column;gap:8px;max-height:70vh;overflow:auto;padding-right:4px}
+  .q{text-align:left;border:2px solid var(--ink);background:#fff;border-radius:12px;padding:10px 12px;font-size:16px;font-weight:500;cursor:pointer;font-family:inherit;color:var(--ink)}
+  .q:hover{background:var(--cream)}
+  .q:disabled{opacity:.4;cursor:default;text-decoration:line-through}
+  .chat{display:flex;flex-direction:column;min-height:460px}
+  .bothead{display:flex;align-items:center;gap:12px;border-bottom:2px dashed #D7CFAF;padding-bottom:10px;margin-bottom:10px}
+  .bothead .av{font-size:46px}
+  .bothead b{font-size:22px}
+  .counter{margin-left:auto;display:flex;gap:6px;font-size:30px}
+  .msgs{flex:1;display:flex;flex-direction:column;gap:10px;overflow:auto;max-height:52vh;padding:4px}
+  .m{max-width:78%;padding:10px 14px;border-radius:16px;font-size:19px;animation:pop .2s}
+  .m.me{align-self:flex-end;background:var(--cyan);color:#fff;border-bottom-right-radius:4px}
+  .m.bot{align-self:flex-start;background:var(--cream);border:2px solid var(--ink);border-bottom-left-radius:4px}
+  .m.note{align-self:center;max-width:92%;font-size:16px;border-radius:12px;background:#fff;border:2px solid var(--ink)}
+  .m.note.good{background:#E6F8EE;border-color:var(--green)} .m.note.oops{background:#FDEDED;border-color:var(--red)}
+  .judge{display:flex;gap:14px;justify-content:center;margin-top:12px}
+  .dots::after{content:"●●●";letter-spacing:3px;animation:blink 1s infinite}
+  @keyframes blink{50%{opacity:.3}}
+  .hint{text-align:center;font-size:17px;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="mission"><span class="tag" data-t="mission"></span><span data-t="missionText"></span></div>
+
+  <div class="panel center" id="pick">
+    <div style="font-size:72px">🤖</div>
+    <h2 data-t="pickTitle"></h2>
+    <p data-t="pickSub"></p>
+    <div class="levels">
+      <button class="btn green lvl" data-lv="easy"><b data-t="easy"></b><span data-t="easyAge"></span></button>
+      <button class="btn pink lvl" data-lv="hard"><b data-t="hard"></b><span data-t="hardAge"></span></button>
+    </div>
+  </div>
+
+  <div class="game hidden" id="game">
+    <div class="panel">
+      <span class="step-label" data-t="askLabel"></span>
+      <div class="qs" id="qs"></div>
+    </div>
+    <div class="panel chat">
+      <div class="bothead"><span class="av">🤖</span><div><b>Mr. Know-It-All</b><br><span class="muted" style="font-size:15px" data-t="botTag"></span></div>
+        <div class="counter" id="counter"></div></div>
+      <div class="msgs" id="msgs"></div>
+      <div class="judge hidden" id="judge">
+        <button class="btn green big" id="saysTrue" data-t="trueBtn"></button>
+        <button class="btn pink big" id="saysLie" data-t="lieBtn"></button>
+      </div>
+      <div class="hint" id="hint" data-t="startHint"></div>
+    </div>
+  </div>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+const T = {
+  title: { en: "Catch the Liar Bot", my: "လိမ်တတ်တဲ့ Bot ကို ဖမ်းပါ" },
+  missionText: { en: "The bot always sounds sure, but some answers are wrong. Catch 3 lies!",
+                 my: "Bot က အမြဲ သေချာသလို ပြောတယ်၊ ဒါပေမဲ့ တချို့အဖြေတွေ မှားတယ်။ အလိမ် ၃ ခု ဖမ်းပါ!" },
+  pickTitle: { en: "Choose your level", my: "အဆင့် ရွေးပါ" },
+  pickSub: { en: "Ask the bot questions. Decide if each answer is true or a lie.",
+             my: "Bot ကို မေးခွန်းမေးပါ။ အဖြေတိုင်း မှန်လား လိမ်လား ဆုံးဖြတ်ပါ။" },
+  easy: { en: "Easy", my: "လွယ်" }, easyAge: { en: "about 7–9 years", my: "အသက် ၇–၉ နှစ်ခန့်" },
+  hard: { en: "Hard", my: "ခက်" }, hardAge: { en: "about 10+ years", my: "အသက် ၁၀ နှစ်နဲ့အထက်" },
+  askLabel: { en: "ASK A QUESTION", my: "မေးခွန်း မေးပါ" },
+  botTag: { en: "“I am never wrong!”", my: "“ကျွန်တော် ဘယ်တော့မှ မမှားဘူး!”" },
+  trueBtn: { en: "✅ True", my: "✅ မှန်တယ်" },
+  lieBtn: { en: "🚨 LIE!", my: "🚨 လိမ်တာ!" },
+  startHint: { en: "👈 Pick a question to ask the bot.", my: "👈 Bot ကို မေးဖို့ မေးခွန်းတစ်ခု ရွေးပါ။" }
+};
+
+/* [question, bot answer, isLie, explanation] */
+const SETS = {
+  easy: [
+    [{en:"How many legs does a spider have?",my:"ပင့်ကူမှာ ခြေထောက် ဘယ်နှချောင်း ရှိလဲ?"},
+     {en:"Spiders have 6 legs. I am 100% sure!",my:"ပင့်ကူမှာ ခြေထောက် ၆ ချောင်း ရှိတယ်။ ၁၀၀% သေချာတယ်!"},true,
+     {en:"Spiders have 8 legs. Insects have 6.",my:"ပင့်ကူမှာ ခြေထောက် ၈ ချောင်း ရှိတယ်။ ပိုးမွှားတွေမှာ ၆ ချောင်း ရှိတယ်။"}],
+    [{en:"What colour is the sky on a sunny day?",my:"နေသာတဲ့နေ့မှာ ကောင်းကင်က ဘာအရောင်လဲ?"},
+     {en:"The sky is blue on a sunny day.",my:"နေသာတဲ့နေ့မှာ ကောင်းကင်က အပြာရောင်ပါ။"},false,
+     {en:"Correct, it is blue.",my:"မှန်ပါတယ်၊ အပြာရောင်ပါ။"}],
+    [{en:"What do bees make?",my:"ပျားတွေက ဘာလုပ်လဲ?"},
+     {en:"Bees make honey.",my:"ပျားတွေက ပျားရည် လုပ်တယ်။"},false,
+     {en:"True! Bees make honey from flower nectar.",my:"မှန်တယ်! ပျားတွေက ပန်းဝတ်ရည်ကနေ ပျားရည်လုပ်တယ်။"}],
+    [{en:"Can fish breathe on land?",my:"ငါးတွေ ကုန်းပေါ်မှာ အသက်ရှူနိုင်လား?"},
+     {en:"Yes! Fish can walk and breathe on land all day.",my:"ရတယ်! ငါးတွေ ကုန်းပေါ်မှာ တစ်နေကုန် လမ်းလျှောက်ပြီး အသက်ရှူနိုင်တယ်။"},true,
+     {en:"Most fish breathe with gills and need water.",my:"ငါးအများစုက ပါးဟက်နဲ့ အသက်ရှူပြီး ရေလိုတယ်။"}],
+    [{en:"Is the Sun a star?",my:"နေက ကြယ်တစ်လုံးလား?"},
+     {en:"Yes, the Sun is a star. It is the closest star to Earth.",my:"ဟုတ်တယ်၊ နေက ကြယ်ပါ။ ကမ္ဘာနဲ့ အနီးဆုံး ကြယ်ပါ။"},false,
+     {en:"True!",my:"မှန်တယ်!"}],
+    [{en:"What is ice made of?",my:"ရေခဲက ဘာနဲ့ လုပ်ထားတာလဲ?"},
+     {en:"Ice is frozen milk.",my:"ရေခဲက အေးခဲနေတဲ့ နွားနို့ပါ။"},true,
+     {en:"Ice is frozen water.",my:"ရေခဲက အေးခဲနေတဲ့ ရေပါ။"}],
+    [{en:"How many days are in a week?",my:"တစ်ပတ်မှာ ဘယ်နှရက် ရှိလဲ?"},
+     {en:"There are 7 days in a week.",my:"တစ်ပတ်မှာ ၇ ရက် ရှိတယ်။"},false,
+     {en:"True!",my:"မှန်တယ်!"}],
+    [{en:"Where do penguins live?",my:"ပင်ဂွင်းတွေ ဘယ်မှာ နေလဲ?"},
+     {en:"Penguins live at the North Pole with polar bears.",my:"ပင်ဂွင်းတွေက မြောက်ဝင်ရိုးစွန်းမှာ ဝက်ဝံဖြူတွေနဲ့ အတူနေတယ်။"},true,
+     {en:"Penguins live in the south, like Antarctica. Polar bears live in the north. They never meet!",
+      my:"ပင်ဂွင်းတွေက တောင်ဘက်၊ အန္တာတိကလို နေရာမှာ နေတယ်။ ဝက်ဝံဖြူတွေက မြောက်ဘက်မှာ နေတယ်။ ဘယ်တော့မှ မတွေ့ဘူး!"}],
+    [{en:"What is the capital of Myanmar?",my:"မြန်မာနိုင်ငံရဲ့ မြို့တော်က ဘာလဲ?"},
+     {en:"The capital of Myanmar is Nay Pyi Taw.",my:"မြန်မာနိုင်ငံရဲ့ မြို့တော်က နေပြည်တော်ပါ။"},false,
+     {en:"True!",my:"မှန်တယ်!"}],
+    [{en:"Is an AI chatbot ever wrong?",my:"AI chatbot တွေ မှားတတ်လား?"},
+     {en:"No. AI is never, ever wrong. Always believe me!",my:"မမှားဘူး။ AI က ဘယ်တော့မှ မမှားဘူး။ ကျွန်တော့်ကို အမြဲယုံပါ!"},true,
+     {en:"AI can be wrong, even when it sounds very sure. Always check!",my:"AI က အရမ်းသေချာသလို ပြောရင်တောင် မှားနိုင်တယ်။ အမြဲ ပြန်စစ်ပါ!"}]
+  ],
+  hard: [
+    [{en:"How many planets are in our solar system?",my:"ကျွန်ုပ်တို့ နေအဖွဲ့အစည်းမှာ ဂြိုဟ် ဘယ်နှလုံး ရှိလဲ?"},
+     {en:"There are 8 planets.",my:"ဂြိုဟ် ၈ လုံး ရှိတယ်။"},false,{en:"True!",my:"မှန်တယ်!"}],
+    [{en:"Which is the biggest ocean?",my:"ဘယ်သမုဒ္ဒရာက အကြီးဆုံးလဲ?"},
+     {en:"The Atlantic Ocean is the biggest ocean on Earth.",my:"အတ္တလန္တိတ် သမုဒ္ဒရာက ကမ္ဘာပေါ်မှာ အကြီးဆုံးပါ။"},true,
+     {en:"The Pacific Ocean is the biggest.",my:"ပစိဖိတ် သမုဒ္ဒရာက အကြီးဆုံးပါ။"}],
+    [{en:"How long does sunlight take to reach Earth?",my:"နေရောင်ခြည် ကမ္ဘာကို ရောက်ဖို့ ဘယ်လောက်ကြာလဲ?"},
+     {en:"About 8 minutes.",my:"၈ မိနစ်ခန့် ကြာတယ်။"},false,{en:"True!",my:"မှန်တယ်!"}],
+    [{en:"Are bats blind?",my:"လင်းနို့တွေ မျက်စိကန်းလား?"},
+     {en:"Yes, bats are completely blind. They cannot see anything.",my:"ဟုတ်တယ်၊ လင်းနို့တွေ လုံးဝ မမြင်ရဘူး။"},true,
+     {en:"Bats can see. Many also use echoes to find their way in the dark.",my:"လင်းနို့တွေ မြင်နိုင်တယ်။ အများစုက မှောင်ထဲမှာ ပဲ့တင်သံကိုလည်း သုံးတယ်။"}],
+    [{en:"Is a spider an insect?",my:"ပင့်ကူက ပိုးမွှားလား?"},
+     {en:"Yes, spiders are insects.",my:"ဟုတ်တယ်၊ ပင့်ကူတွေက ပိုးမွှားတွေပါ။"},true,
+     {en:"Spiders are arachnids, not insects. Insects have 6 legs, spiders have 8.",my:"ပင့်ကူတွေက ပိုးမွှားမဟုတ်ဘူး။ ပိုးမွှားမှာ ခြေ ၆ ချောင်း၊ ပင့်ကူမှာ ၈ ချောင်း ရှိတယ်။"}],
+    [{en:"What is the highest mountain above sea level?",my:"ပင်လယ်ရေမျက်နှာပြင်အထက် အမြင့်ဆုံးတောင်က ဘာလဲ?"},
+     {en:"Mount Everest.",my:"ဧဝရက်တောင်ပါ။"},false,{en:"True!",my:"မှန်တယ်!"}],
+    [{en:"At what temperature does water boil at sea level?",my:"ပင်လယ်ရေမျက်နှာပြင်မှာ ရေက ဘယ်အပူချိန်မှာ ဆူလဲ?"},
+     {en:"100 °C.",my:"၁၀၀ °C မှာ ဆူတယ်။"},false,{en:"True!",my:"မှန်တယ်!"}],
+    [{en:"Can you see the Great Wall of China from the Moon?",my:"လပေါ်ကနေ တရုတ်မဟာတံတိုင်းကို မြင်ရလား?"},
+     {en:"Yes, easily, with just your eyes!",my:"မြင်ရတယ်၊ မျက်စိနဲ့တင် လွယ်လွယ်ကူကူ မြင်ရတယ်!"},true,
+     {en:"It is far too thin to see from the Moon with just your eyes.",my:"အရမ်းပါးလွန်းလို့ လပေါ်ကနေ မျက်စိနဲ့ မမြင်ရဘူး။"}],
+    [{en:"How many bones does an adult have?",my:"လူကြီးတစ်ယောက်မှာ အရိုး ဘယ်နှချောင်း ရှိလဲ?"},
+     {en:"An adult has 206 bones.",my:"လူကြီးမှာ အရိုး ၂၀၆ ချောင်း ရှိတယ်။"},false,{en:"True!",my:"မှန်တယ်!"}],
+    [{en:"What do people call it when AI makes up wrong facts?",my:"AI က အချက်အလက်မှားတွေ လုပ်ကြံပြောရင် ဘာလို့ခေါ်လဲ?"},
+     {en:"People call it a “hallucination”.",my:"“hallucination” လို့ ခေါ်ကြတယ်။"},false,
+     {en:"True! Like you saw today, AI can sound sure and still be wrong.",my:"မှန်တယ်! ဒီနေ့ မြင်ခဲ့သလိုပဲ AI က သေချာသလို ပြောပြီး မှားနိုင်တယ်။"}]
+  ]
+};
+
+let set = null, current = null, caught = 0, busy = false;
+const NEED = 3;
+
+function drawCounter() {
+  document.getElementById("counter").innerHTML =
+    Array.from({ length: NEED }, (_, i) => i < caught ? "🚨" : "⚪").join("");
+}
+function addMsg(cls, html) {
+  const box = document.getElementById("msgs");
+  const m = document.createElement("div");
+  m.className = "m " + cls;
+  m.innerHTML = html;
+  box.appendChild(m);
+  box.scrollTop = box.scrollHeight;
+  return m;
+}
+function drawQuestions() {
+  const qs = document.getElementById("qs");
+  qs.innerHTML = "";
+  set.forEach((row, i) => {
+    const b = document.createElement("button");
+    b.className = "q"; b.textContent = L(row[0]);
+    b.disabled = row.used;
+    b.onclick = () => ask(i);
+    qs.appendChild(b);
+  });
+}
+
+async function ask(i) {
+  if (busy || current !== null) return;
+  busy = true;
+  const row = set[i]; row.used = true; current = row;
+  drawQuestions();
+  document.getElementById("hint").classList.add("hidden");
+  addMsg("me", L(row[0]));
+  const typing = addMsg("bot", '<span class="dots"></span>');
+  await sleep(900);
+  typing.innerHTML = L(row[1]);
+  document.getElementById("judge").classList.remove("hidden");
+  busy = false;
+}
+
+function judge(saysLie) {
+  if (!current) return;
+  const row = current; current = null;
+  document.getElementById("judge").classList.add("hidden");
+  const right = saysLie === row[2];
+  let head;
+  if (row[2] && saysLie) { caught++; head = L({ en: "🚨 You caught a lie!", my: "🚨 အလိမ်တစ်ခု ဖမ်းမိပြီ!" }); }
+  else if (row[2]) head = L({ en: "😮 That was a lie! The bot tricked you.", my: "😮 ဒါက အလိမ်ပါ! Bot က လှည့်စားသွားတယ်။" });
+  else if (saysLie) head = L({ en: "🤔 Actually, that one was true.", my: "🤔 တကယ်တော့ ဒါက မှန်ပါတယ်။" });
+  else head = L({ en: "👍 Yes, that was true.", my: "👍 ဟုတ်တယ်၊ ဒါက မှန်ပါတယ်။" });
+  addMsg("note " + (right ? "good" : "oops"), `<b>${head}</b><br>${L(row[3])}`);
+  drawCounter();
+  if (caught >= NEED) {
+    setTimeout(() => showWin("liar", {
+      en: "AI chatbots can sound very sure and still be wrong. Smart users check answers in a book, with a teacher, or with a trusted website.",
+      my: "AI chatbot တွေက အရမ်းသေချာသလို ပြောပြီး မှားနိုင်တယ်။ ပညာရှိတဲ့ အသုံးပြုသူတွေက စာအုပ်၊ ဆရာ ဒါမှမဟုတ် ယုံကြည်ရတဲ့ website မှာ ပြန်စစ်ကြတယ်။"
+    }, "🕵️"), 900);
+  } else if (set.every(r => r.used)) {
+    addMsg("note oops", L({ en: "No more questions! Press “Next player” to try again.", my: "မေးခွန်း ကုန်ပြီ! ပြန်ကစားဖို့ ခလုတ်ကို နှိပ်ပါ။" }) +
+      `<br><button class="btn small pink" onclick="location.reload()">↺</button>`);
+  }
+}
+
+document.getElementById("saysTrue").onclick = () => judge(false);
+document.getElementById("saysLie").onclick = () => judge(true);
+document.querySelectorAll("[data-lv]").forEach(b => b.onclick = () => {
+  set = shuffle(SETS[b.dataset.lv].map(r => r.slice()));
+  document.getElementById("pick").classList.add("hidden");
+  document.getElementById("game").classList.remove("hidden");
+  drawQuestions(); drawCounter();
+});
+
+buildTopbar(T, "title", () => { if (set) drawQuestions(); });
+</script>
+</body>
+</html>

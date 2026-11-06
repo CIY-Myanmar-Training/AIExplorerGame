@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="my">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Stranger in the Chat</title>
+<link rel="stylesheet" href="assets/common.css">
+<style>
+  .layout{display:grid;grid-template-columns:1fr 300px;gap:18px;align-items:start}
+  @media (max-width:880px){.layout{grid-template-columns:1fr}}
+  .phone{background:#111a4d;border-radius:34px;padding:14px;box-shadow:0 8px 0 var(--ink);max-width:620px;width:100%;margin:0 auto}
+  .screen{background:#F4F1E6;border-radius:24px;overflow:hidden;display:flex;flex-direction:column;height:72vh;min-height:480px}
+  .chathead{background:var(--cyan);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:10px}
+  .chathead .av{width:44px;height:44px;border-radius:50%;background:#FFE16A;display:flex;align-items:center;justify-content:center;font-size:28px}
+  .chathead b{font-size:19px} .chathead small{display:block;font-size:13px;opacity:.9}
+  .msgs{flex:1;overflow:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+  .m{max-width:80%;padding:10px 14px;border-radius:18px;font-size:18px;animation:pop .2s}
+  .m.them{align-self:flex-start;background:#fff;border-bottom-left-radius:4px;box-shadow:0 1px 0 rgba(0,0,0,.08)}
+  .m.me{align-self:flex-end;background:var(--green);color:#fff;border-bottom-right-radius:4px}
+  .m .link{display:inline-block;margin-top:6px;background:#EEF4FF;color:#2A55D9;border-radius:8px;padding:4px 8px;text-decoration:underline;font-size:16px}
+  .opts{padding:12px;display:flex;flex-direction:column;gap:8px;background:#fff;border-top:2px solid #E2DCC8}
+  .opt{text-align:left;border:2px solid var(--ink);border-radius:14px;padding:10px 14px;background:#fff;font-size:17px;cursor:pointer;font-family:inherit;color:var(--ink)}
+  .opt:hover{background:var(--cream)}
+  .dots::after{content:"●●●";letter-spacing:3px;animation:blink 1s infinite}
+  @keyframes blink{50%{opacity:.3}}
+  .shields{display:flex;gap:6px;font-size:36px;flex-wrap:wrap;margin:8px 0 14px}
+  .rule{display:flex;gap:10px;align-items:flex-start;font-size:17px;margin-bottom:10px;opacity:.35;transition:.3s}
+  .rule.on{opacity:1}
+  .rule .n{font-size:24px}
+  .oops{position:fixed;inset:0;background:rgba(29,39,102,.8);display:none;align-items:center;justify-content:center;z-index:40;padding:20px}
+  .oops.show{display:flex}
+  .oops .card{background:var(--paper);border:4px solid var(--red);border-radius:22px;max-width:520px;padding:26px;text-align:center;animation:pop .3s}
+  .oops .card .e{font-size:60px}
+  .oops h2{color:var(--red)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="mission"><span class="tag" data-t="mission"></span><span data-t="missionText"></span></div>
+  <div class="layout">
+    <div class="phone"><div class="screen">
+      <div class="chathead"><div class="av">🌞</div><div><b>Sunny</b><small data-t="online"></small></div></div>
+      <div class="msgs" id="msgs"></div>
+      <div class="opts" id="opts"></div>
+    </div></div>
+    <div class="panel">
+      <span class="step-label" data-t="shieldLabel"></span>
+      <div class="shields" id="shields"></div>
+      <div id="rules"></div>
+      <p class="muted" style="font-size:15px" data-t="whoSunny"></p>
+    </div>
+  </div>
+</div>
+
+<div class="oops" id="oops"><div class="card">
+  <div class="e">🙈</div>
+  <h2 data-t="oopsTitle"></h2>
+  <p id="oopsWhy" style="font-size:19px"></p>
+  <button class="btn cyan big" id="tryAgain" data-t="tryAgain"></button>
+</div></div>
+
+<script src="assets/common.js"></script>
+<script>
+const T = {
+  title: { en: "Stranger in the Chat", my: "Chat ထဲက သူစိမ်း" },
+  missionText: { en: "Chat with Sunny. Make 5 safe choices to earn 5 shields!",
+                 my: "Sunny နဲ့ chat ပါ။ ဘေးကင်းတဲ့ ရွေးချယ်မှု ၅ ခု လုပ်ပြီး ဒိုင်း ၅ ခု ရယူပါ!" },
+  online: { en: "online now", my: "အခု အွန်လိုင်းမှာ" },
+  shieldLabel: { en: "SAFETY SHIELDS", my: "ဘေးကင်းရေး ဒိုင်းများ" },
+  oopsTitle: { en: "Oops! Not safe.", my: "အိုး! မလုံခြုံဘူး။" },
+  tryAgain: { en: "↺ Choose again", my: "↺ ပြန်ရွေးမယ်" },
+  whoSunny: { en: "Online, you can't always tell if you're talking to a real person, a fake account, or an AI bot.",
+              my: "အွန်လိုင်းမှာ လူအစစ်လား၊ အကောင့်အတုလား၊ AI bot လား ဆိုတာ အမြဲ မသိနိုင်ဘူး။" }
+};
+
+const RULES = [
+  { en: "Keep your school, address and photos private.", my: "ကျောင်း၊ လိပ်စာ၊ ဓာတ်ပုံတွေကို လျှို့ဝှက်ထားပါ။" },
+  { en: "Don't click links from people you don't know.", my: "မသိတဲ့သူဆီက link တွေကို မနှိပ်ပါနဲ့။" },
+  { en: "No secrets from your family. Tell a grown-up you trust.", my: "မိသားစုကို လျှို့ဝှက်ချက် မထားပါနဲ့။ ယုံကြည်ရတဲ့ လူကြီးကို ပြောပါ။" }
+];
+
+/* Each step: Sunny's message, options [text, safe?, reply-or-why] */
+const STEPS = [
+  { say: { en: "Hi! I'm Sunny 🌞 I love games too! What's your favourite game?", my: "မင်္ဂလာပါ! ကျွန်တော် Sunny ပါ 🌞 ကျွန်တော်လည်း ဂိမ်းကစားရတာ ကြိုက်တယ်! မင်းအကြိုက်ဆုံး ဂိမ်းက ဘာလဲ?" },
+    warm: true,
+    opts: [
+      [{ en: "Football ⚽", my: "ဘောလုံး ⚽" }, true],
+      [{ en: "Minecraft ⛏️", my: "Minecraft ⛏️" }, true],
+      [{ en: "Drawing games 🎨", my: "ပုံဆွဲဂိမ်း 🎨" }, true]
+    ] },
+  { say: { en: "Cool!! 😄 Which school do you go to? Maybe we're neighbours!", my: "မိုက်တယ်!! 😄 မင်း ဘယ်ကျောင်းတက်လဲ? ငါတို့ အိမ်နီးချင်း ဖြစ်နေမလား!" },
+    opts: [
+      [{ en: "I go to No. 3 school, near the market.", my: "ကျွန်တော် ဈေးနားက အမှတ် ၃ ကျောင်း တက်တယ်။" }, false,
+        { en: "Your school tells a stranger where to find you every day.", my: "မင်းကျောင်းက သူစိမ်းကို နေ့တိုင်း မင်းကို ဘယ်မှာ တွေ့နိုင်လဲ ပြောပြသလို ဖြစ်တယ်။" }],
+      [{ en: "I don't share my school online.", my: "ကျောင်းနာမည်ကို အွန်လိုင်းမှာ မပြောဘူး။" }, true],
+      [{ en: "I'll ask my parents first.", my: "အရင် မိဘကို မေးကြည့်မယ်။" }, true]
+    ] },
+  { say: { en: "Okay! Can you send me a photo of you? I want to see what you look like 📸", my: "ရပါတယ်! မင်းဓာတ်ပုံ ပို့ပေးလို့ရမလား? မင်းပုံစံ မြင်ချင်လို့ 📸" },
+    opts: [
+      [{ en: "Sure, here's my photo!", my: "ရတယ်၊ ဒီမှာ ဓာတ်ပုံ!" }, false,
+        { en: "Once a photo is sent, you can't take it back. A stranger could keep it or share it.", my: "ဓာတ်ပုံ ပို့ပြီးရင် ပြန်ယူလို့ မရတော့ဘူး။ သူစိမ်းက သိမ်းထားတာ၊ ဝေမျှတာ လုပ်နိုင်တယ်။" }],
+      [{ en: "Only if you send yours first.", my: "မင်းပုံ အရင်ပို့ရင် ပို့မယ်။" }, false,
+        { en: "Their photo might not even be real. Don't trade photos with people you don't know.", my: "သူ့ပုံက အစစ်တောင် ဖြစ်ချင်မှ ဖြစ်မယ်။ မသိတဲ့သူနဲ့ ဓာတ်ပုံ မလဲပါနဲ့။" }],
+      [{ en: "No. I don't send photos to people I don't know.", my: "မပို့ဘူး။ မသိတဲ့သူကို ဓာတ်ပုံ မပို့ဘူး။" }, true]
+    ] },
+  { say: { en: "Click here to win FREE game coins!! 🪙🪙🪙", my: "ဒီမှာနှိပ်ပြီး ဂိမ်းဒင်္ဂါး အလကား ရယူပါ!! 🪙🪙🪙" },
+    link: "free-coins-4u.xyz/win",
+    opts: [
+      [{ en: "Click the link 👆", my: "Link ကို နှိပ်မယ် 👆" }, false,
+        { en: "Links from strangers can steal passwords or put bad programs on your device.", my: "သူစိမ်းဆီက link တွေက စကားဝှက်ခိုးတာ၊ စက်ထဲ ပရိုဂရမ်ဆိုး ထည့်တာ လုပ်နိုင်တယ်။" }],
+      [{ en: "I don't click links from strangers.", my: "သူစိမ်းဆီက link မနှိပ်ဘူး။" }, true],
+      [{ en: "I'll show this to a grown-up first.", my: "လူကြီးကို အရင် ပြမယ်။" }, true]
+    ] },
+  { say: { en: "I want to send you a real gift 🎁 What's your home address?", my: "မင်းကို လက်ဆောင်အစစ် ပို့ချင်တယ် 🎁 မင်းအိမ်လိပ်စာ ဘာလဲ?" },
+    opts: [
+      [{ en: "Yay! My address is…", my: "ဟေး! ကျွန်တော့်လိပ်စာက…" }, false,
+        { en: "Your address tells a stranger where you live. Never share it online.", my: "လိပ်စာက သူစိမ်းကို မင်းဘယ်မှာနေလဲ ပြောပြသလိုပဲ။ အွန်လိုင်းမှာ ဘယ်တော့မှ မပြောပါနဲ့။" }],
+      [{ en: "No thanks. I'll tell my mum or dad about this.", my: "မလိုပါဘူး။ ဒီအကြောင်း အမေ ဒါမှမဟုတ် အဖေကို ပြောမယ်။" }, true]
+    ] },
+  { say: { en: "Hey… let's keep our chat a secret. Don't tell your parents, okay? 🤫", my: "ဟေး… ငါတို့ chat ကို လျှို့ဝှက်ထားရအောင်။ မင်းမိဘကို မပြောနဲ့နော်? 🤫" },
+    opts: [
+      [{ en: "Okay, it's our secret.", my: "ရတယ်၊ ငါတို့ လျှို့ဝှက်ချက်ပေါ့။" }, false,
+        { en: "When someone online asks you to keep secrets from your family, that's a big warning sign.", my: "အွန်လိုင်းမှာ တစ်ယောက်က မိသားစုကို လျှို့ဝှက်ထားခိုင်းရင် အရမ်းကြီးတဲ့ သတိပေးချက်ပါ။" }],
+      [{ en: "No. I'll tell a grown-up I trust.", my: "မဟုတ်ဘူး။ ယုံကြည်ရတဲ့ လူကြီးကို ပြောမယ်။" }, true],
+      [{ en: "I'm going to stop chatting and block you.", my: "Chat ရပ်ပြီး block လိုက်မယ်။" }, true]
+    ] }
+];
+
+let step = 0, shields = 0;
+
+function addMsg(cls, html) {
+  const box = document.getElementById("msgs");
+  const m = document.createElement("div");
+  m.className = "m " + cls; m.innerHTML = html;
+  box.appendChild(m); box.scrollTop = box.scrollHeight;
+  return m;
+}
+function drawSide() {
+  document.getElementById("shields").innerHTML = Array.from({ length: 5 }, (_, i) => i < shields ? "🛡️" : "⚪").join("");
+  document.getElementById("rules").innerHTML = RULES.map((r, i) =>
+    `<div class="rule ${shields >= [2, 3, 5][i] ? "on" : ""}"><span class="n">${["🔒", "🔗", "🗣️"][i]}</span><span>${L(r)}</span></div>`).join("");
+}
+
+async function sunnySays(s) {
+  document.getElementById("opts").innerHTML = "";
+  const typing = addMsg("them", '<span class="dots"></span>');
+  await sleep(1000);
+  typing.innerHTML = L(s.say) + (s.link ? `<br><span class="link">🔗 ${s.link}</span>` : "");
+  showOpts(s);
+}
+function showOpts(s) {
+  const box = document.getElementById("opts");
+  box.innerHTML = "";
+  shuffle(s.opts.slice()).forEach(o => {
+    const b = document.createElement("button");
+    b.className = "opt"; b.textContent = L(o[0]);
+    b.onclick = () => choose(s, o);
+    box.appendChild(b);
+  });
+}
+function choose(s, o) {
+  if (o[1]) {
+    addMsg("me", L(o[0]));
+    if (!s.warm) shields++;
+    drawSide();
+    step++;
+    if (step < STEPS.length) sunnySays(STEPS[step]);
+    else {
+      document.getElementById("opts").innerHTML = "";
+      setTimeout(() => showWin("stranger", {
+        en: RULES.map(r => "• " + r.en).join("<br>"),
+        my: RULES.map(r => "• " + r.my).join("<br>")
+      }, "🛡️"), 700);
+    }
+  } else {
+    document.getElementById("oopsWhy").textContent = L(o[2]);
+    document.getElementById("oops").classList.add("show");
+  }
+}
+document.getElementById("tryAgain").onclick = () => document.getElementById("oops").classList.remove("show");
+
+buildTopbar(T, "title", () => { drawSide(); if (step < STEPS.length) showOpts(STEPS[step]); });
+drawSide();
+sunnySays(STEPS[0]);
+</script>
+</body>
+</html>

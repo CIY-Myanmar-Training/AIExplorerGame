@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="my">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>The Word Machine</title>
+<link rel="stylesheet" href="assets/common.css">
+<style>
+  .layout{display:grid;grid-template-columns:1fr 320px;gap:18px;align-items:start}
+  @media (max-width:900px){.layout{grid-template-columns:1fr}}
+  .sentence{background:var(--ink);color:#fff;border-radius:16px;padding:18px 20px;font-size:30px;min-height:90px;line-height:1.5;margin-bottom:14px}
+  .sentence .w{display:inline-block;animation:pop .25s}
+  .sentence .cur{display:inline-block;width:14px;height:30px;background:#FFE16A;vertical-align:middle;margin-left:6px;animation:blink 1s infinite}
+  @keyframes blink{50%{opacity:0}}
+  .ask{font-size:18px;margin:6px 0 10px}
+  .choices{display:flex;flex-direction:column;gap:10px}
+  .choice{display:grid;grid-template-columns:150px 1fr 150px;align-items:center;gap:12px;border:3px solid var(--ink);border-radius:14px;background:#fff;
+    padding:8px 12px;cursor:pointer;font-family:inherit;color:var(--ink);text-align:left;box-shadow:0 4px 0 var(--ink)}
+  .choice:active{transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}
+  .choice .word{font-size:24px;font-weight:700}
+  .choice .bar{height:22px;background:#EEE6C8;border-radius:999px;overflow:hidden}
+  .choice .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--cyan),var(--pink));border-radius:999px;transition:width .4s}
+  .choice .cnt{font-size:14px;text-align:right;opacity:.75}
+  .choice.top{background:#FFF8D9}
+  .tools{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+  .ms{display:flex;gap:10px;align-items:center;border:2px solid var(--ink);border-radius:12px;padding:10px;margin-bottom:10px;background:#fff;font-size:17px}
+  .ms .box{font-size:28px}
+  .ms.done{background:#E6F8EE;border-color:var(--green)}
+  .book{position:fixed;inset:0;background:rgba(29,39,102,.8);display:none;align-items:center;justify-content:center;z-index:40;padding:20px}
+  .book.show{display:flex}
+  .book .card{background:var(--paper);border:4px solid var(--ink);border-radius:20px;max-width:640px;width:100%;max-height:80vh;overflow:auto;padding:22px}
+  .book li{font-size:18px;margin:4px 0}
+  .done-line{background:#E6F8EE;border:2px solid var(--green);border-radius:12px;padding:10px 14px;font-size:18px;margin-top:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="mission"><span class="tag" data-t="mission"></span><span data-t="missionText"></span></div>
+  <div class="layout">
+    <div class="panel">
+      <div class="sentence" id="sentence"></div>
+      <div class="ask" data-t="askNext"></div>
+      <div class="choices" id="choices"></div>
+      <div id="doneLine"></div>
+      <div class="tools">
+        <button class="btn orange" id="auto" data-t="auto"></button>
+        <button class="btn" id="restart" data-t="restart"></button>
+        <button class="btn cyan" id="openBook" data-t="bookBtn"></button>
+      </div>
+    </div>
+    <div class="panel">
+      <span class="step-label" data-t="msLabel"></span>
+      <div id="missions"></div>
+      <p class="muted" style="font-size:15px" data-t="howItWorks"></p>
+    </div>
+  </div>
+</div>
+
+<div class="book" id="book"><div class="card">
+  <h2 data-t="bookTitle"></h2>
+  <p data-t="bookSub"></p>
+  <ol id="bookList"></ol>
+  <button class="btn pink" id="closeBook">✕</button>
+</div></div>
+
+<script src="assets/common.js"></script>
+<script>
+const T = {
+  title: { en: "The Word Machine", my: "စကားလုံး စက်" },
+  missionText: { en: "Steer the machine to finish 2 silly sentences from the mission list.",
+                 my: "စက်ကို လမ်းကြောင်းပြပြီး မစ်ရှင်စာရင်းထဲက ဝါကျရယ်ရယ်လေး ၂ ကြောင်း ပြီးအောင် ရေးပါ။" },
+  askNext: { en: "The machine guesses the next word. Pick one:", my: "စက်က နောက်စကားလုံးကို ခန့်မှန်းတယ်။ တစ်ခု ရွေးပါ:" },
+  auto: { en: "🎲 Let the machine choose", my: "🎲 စက်ကို ရွေးခိုင်းမယ်" },
+  restart: { en: "↺ New sentence", my: "↺ ဝါကျအသစ်" },
+  bookBtn: { en: "📚 What did it read?", my: "📚 ဘာတွေ ဖတ်ခဲ့လဲ?" },
+  msLabel: { en: "SILLY MISSIONS", my: "ရယ်စရာ မစ်ရှင်များ" },
+  howItWorks: { en: "The machine read a small book and counted which word usually comes after each word. Bigger bar = it saw that word next more often.",
+                my: "စက်က စာအုပ်လေးတစ်အုပ် ဖတ်ပြီး စကားလုံးတစ်လုံးနောက်မှာ ဘယ်စကားလုံး များများလာလဲ ရေတွက်ထားတယ်။ ဘားရှည်လေ၊ အဲဒီစကားလုံး နောက်မှာ မြင်ဖူးတာ များလေပါ။" },
+  bookTitle: { en: "📚 The machine's whole book", my: "📚 စက်ရဲ့ စာအုပ်တစ်အုပ်လုံး" },
+  bookSub: { en: "This is everything it learned from. Real AI reads billions of sentences, but the idea is the same: count, then guess.",
+             my: "ဒါ သူသင်ယူခဲ့သမျှ အားလုံးပါ။ AI အစစ်တွေက ဝါကျ သန်းပေါင်းများစွာ ဖတ်တယ်၊ ဒါပေမဲ့ အိုင်ဒီယာက အတူတူပဲ: ရေတွက်ပြီး ခန့်မှန်းတယ်။" }
+};
+
+const BOOK = {
+  en: `the cat sat on the mat .
+the cat ate a fish .
+the cat became the king .
+the king wore a big crown .
+the king ate rice with the robot .
+the dog ran to the park .
+the dog jumped over the moon .
+the moon is big and bright .
+the robot ate rice .
+the robot can sing a song .
+a fish swam in the river .
+a big dog sat in the park .
+the girl saw the moon .
+the boy ate rice and fish .
+the girl gave the cat a fish .
+the king was very happy .
+the robot was very happy .
+the cat was very sleepy .
+the boy and the girl ran to the river .
+the dog can sing .
+the moon was very happy .
+a robot became a king .
+the boy saw a big robot .
+the girl can fly to the moon .
+the cat can fly .`,
+  my: `ကြောင် က ဖျာ ပေါ် မှာ ထိုင် တယ် ။
+ကြောင် က ငါး စား တယ် ။
+ကြောင် က ဘုရင် ဖြစ် သွား တယ် ။
+ဘုရင် က သရဖူ ကြီး ဆောင်း တယ် ။
+ဘုရင် က စက်ရုပ် နဲ့ ထမင်း စား တယ် ။
+ခွေး က ပန်းခြံ ကို ပြေး တယ် ။
+ခွေး က လ ပေါ် ကို ခုန် တယ် ။
+လ က ကြီး ပြီး လင်း တယ် ။
+စက်ရုပ် က ထမင်း စား တယ် ။
+စက်ရုပ် က သီချင်း ဆို တယ် ။
+ငါး က မြစ် ထဲ မှာ ကူး တယ် ။
+ခွေး ကြီး က ပန်းခြံ ထဲ မှာ ထိုင် တယ် ။
+ကောင်မလေး က လ ကို မြင် တယ် ။
+ကောင်လေး က ထမင်း နဲ့ ငါး စား တယ် ။
+ဘုရင် က အရမ်း ပျော် တယ် ။
+စက်ရုပ် က အရမ်း ပျော် တယ် ။
+ကြောင် က အရမ်း အိပ်ချင် တယ် ။
+ကောင်လေး နဲ့ ကောင်မလေး က မြစ် ကို ပြေး တယ် ။
+ခွေး က သီချင်း ဆို တယ် ။
+လ က အရမ်း ပျော် တယ် ။
+စက်ရုပ် က ဘုရင် ဖြစ် သွား တယ် ။
+ကောင်လေး က စက်ရုပ် ကြီး ကို မြင် တယ် ။
+ကောင်မလေး က လ ပေါ် ကို ပျံ တယ် ။
+ကြောင် က ပျံ တယ် ။`
+};
+const END = { en: ".", my: "။" };
+
+const MISSIONS = [
+  { words: { en: ["cat", "king"], my: ["ကြောင်", "ဘုရင်"] }, text: { en: "🐱 The cat becomes king", my: "🐱 ကြောင်က ဘုရင်ဖြစ်သွားတယ်" } },
+  { words: { en: ["dog", "moon"], my: ["ခွေး", "လ"] }, text: { en: "🐶 The dog goes to the moon", my: "🐶 ခွေးက လပေါ် ရောက်သွားတယ်" } },
+  { words: { en: ["robot", "rice"], my: ["စက်ရုပ်", "ထမင်း"] }, text: { en: "🤖 The robot eats rice", my: "🤖 စက်ရုပ်က ထမင်းစားတယ်" } }
+];
+const NEED = 2;
+
+let model, words = [], done = new Set();
+
+function buildModel() {
+  const next = {}; const START = "<s>";
+  BOOK[LANG].trim().split("\n").forEach(line => {
+    const toks = [START, ...line.trim().split(/\s+/)];
+    for (let i = 0; i < toks.length - 1; i++) {
+      next[toks[i]] = next[toks[i]] || {};
+      next[toks[i]][toks[i + 1]] = (next[toks[i]][toks[i + 1]] || 0) + 1;
+    }
+  });
+  return next;
+}
+function options() {
+  const last = words.length ? words[words.length - 1] : "<s>";
+  const counts = model[last] || {};
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  return Object.entries(counts).map(([w, c]) => ({ w, c, p: c / total })).sort((a, b) => b.c - a.c).slice(0, 6);
+}
+function joinWords(ws) {
+  return LANG === "my" ? ws.join("") : ws.join(" ").replace(" .", ".");
+}
+
+function draw() {
+  const s = document.getElementById("sentence");
+  const finished = words.length && words[words.length - 1] === END[LANG];
+  s.innerHTML = words.map((w, i) => `<span class="${i === words.length - 1 ? "w" : ""}">${LANG === "my" ? w : w + " "}</span>`).join("") + (finished ? "" : '<span class="cur"></span>');
+  const box = document.getElementById("choices");
+  box.innerHTML = "";
+  if (finished) return;
+  const opts = options();
+  const maxP = opts.length ? opts[0].p : 1;
+  opts.forEach((o, i) => {
+    const b = document.createElement("button");
+    b.className = "choice" + (i === 0 ? " top" : "");
+    const label = o.w === END[LANG] ? L({ en: "(end) .", my: "(ဆုံး) ။" }) : o.w;
+    b.innerHTML = `<span class="word">${label}</span><span class="bar"><i style="width:${Math.round(o.p / maxP * 100)}%"></i></span>
+      <span class="cnt">${Math.round(o.p * 100)}% · ${L({ en: `seen ${o.c}×`, my: `${o.c} ကြိမ် မြင်ဖူး` })}</span>`;
+    b.onclick = () => add(o.w);
+    box.appendChild(b);
+  });
+  document.getElementById("auto").disabled = finished;
+}
+function drawMissions() {
+  document.getElementById("missions").innerHTML = MISSIONS.map((m, i) =>
+    `<div class="ms ${done.has(i) ? "done" : ""}"><span class="box">${done.has(i) ? "✅" : "⬜"}</span><span>${L(m.text)}</span></div>`).join("");
+}
+
+function add(w) {
+  words.push(w);
+  if (words.length > 18 && w !== END[LANG]) words.push(END[LANG]);
+  draw();
+  if (words[words.length - 1] === END[LANG]) finish();
+}
+function finish() {
+  const line = document.getElementById("doneLine");
+  let hit = -1;
+  MISSIONS.forEach((m, i) => {
+    if (!done.has(i) && m.words[LANG].every(x => words.includes(x))) { done.add(i); hit = i; }
+  });
+  drawMissions();
+  line.innerHTML = `<div class="done-line">${hit >= 0
+    ? L({ en: "⭐ Mission sentence done!", my: "⭐ မစ်ရှင် ဝါကျ ပြီးပြီ!" })
+    : L({ en: "Funny sentence! Press “New sentence” and try a mission.", my: "ရယ်စရာ ဝါကျပဲ! “ဝါကျအသစ်” နှိပ်ပြီး မစ်ရှင်တစ်ခု စမ်းကြည့်ပါ။" })}</div>`;
+  document.getElementById("auto").disabled = true;
+  if (done.size >= NEED) setTimeout(() => showWin("word", {
+    en: "AI that writes text doesn't understand stories like you do. It counts which words usually come next, then picks one. That's why it can write smart sentences and silly ones too.",
+    my: "စာရေးတဲ့ AI က ပုံပြင်ကို သင့်လို နားမလည်ဘူး။ ဘယ်စကားလုံး များသောအားဖြင့် နောက်လာလဲ ရေတွက်ပြီး တစ်ခု ရွေးတာ။ ဒါကြောင့် ဝါကျကောင်းတွေရော ရယ်စရာ ဝါကျတွေရော ရေးနိုင်တာပါ။"
+  }, "🔤"), 1200);
+}
+function restart() {
+  words = [];
+  document.getElementById("doneLine").innerHTML = "";
+  document.getElementById("auto").disabled = false;
+  draw();
+}
+
+document.getElementById("auto").onclick = () => {
+  const opts = options(); let r = Math.random(), acc = 0;
+  for (const o of opts) { acc += o.p; if (r <= acc) return add(o.w); }
+  add(opts[0].w);
+};
+document.getElementById("restart").onclick = restart;
+document.getElementById("openBook").onclick = () => {
+  document.getElementById("bookList").innerHTML = BOOK[LANG].trim().split("\n").map(l => `<li>${joinWords(l.trim().split(/\s+/))}</li>`).join("");
+  document.getElementById("book").classList.add("show");
+};
+document.getElementById("closeBook").onclick = () => document.getElementById("book").classList.remove("show");
+
+function init() { model = buildModel(); drawMissions(); restart(); }
+buildTopbar(T, "title", init);
+init();
+</script>
+</body>
+</html>

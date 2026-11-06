@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="my">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pose Pilot</title>
+<link rel="stylesheet" href="assets/common.css">
+<style>
+  .train{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media (max-width:900px){.train{grid-template-columns:1fr}}
+  .cam{position:relative;border:4px solid var(--ink);border-radius:18px;overflow:hidden;background:#000;aspect-ratio:4/3}
+  .cam video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);display:block}
+  .count{position:absolute;inset:0;display:none;align-items:center;justify-content:center;flex-direction:column;color:#fff;background:rgba(229,48,122,.45);
+    font-size:110px;font-weight:700;text-shadow:0 4px 0 rgba(0,0,0,.3)}
+  .count small{font-size:26px}
+  .count.show{display:flex}
+  .classes{display:flex;flex-direction:column;gap:14px}
+  .cls{display:grid;grid-template-columns:90px 1fr;gap:14px;align-items:center;border:3px solid var(--ink);border-radius:16px;padding:14px;background:#fff}
+  .cls .pose{font-size:66px;text-align:center;line-height:1}
+  .cls h3{margin:0 0 4px;font-size:22px}
+  .cls .n{font-size:15px;opacity:.75;margin:4px 0 8px}
+  .meter{display:flex;align-items:center;gap:10px;margin-top:6px}
+  .meter .bar{flex:1;height:26px;border:2px solid var(--ink);border-radius:999px;overflow:hidden;background:#EEE;display:flex}
+  .meter .bar i{display:block;height:100%;transition:width .15s}
+  .meter .up{background:var(--cyan)} .meter .down{background:var(--orange)}
+  .gamebox{position:relative}
+  canvas{display:block;height:min(62vh,520px);max-width:100%;margin:0 auto;border:4px solid var(--ink);border-radius:18px;background:#7FD3F2}
+  .gamebox{width:fit-content;max-width:100%;margin:0 auto}
+  .mini{position:absolute;right:14px;top:14px;width:170px;border:3px solid #fff;border-radius:12px;overflow:hidden;background:#000;box-shadow:0 4px 0 rgba(0,0,0,.2)}
+  .mini video{width:100%;display:block;transform:scaleX(-1)}
+  .mini .lab{position:absolute;left:0;right:0;bottom:0;text-align:center;font-weight:700;color:#fff;font-size:15px;padding:2px;background:rgba(29,39,102,.75)}
+  .hud{display:flex;gap:12px;align-items:center;margin-top:12px;flex-wrap:wrap}
+  .hud .got{font-size:26px;font-weight:700;background:#fff;border:3px solid var(--ink);border-radius:12px;padding:6px 16px}
+  .err{background:#FDEDED;border:3px dashed var(--red);border-radius:14px;padding:14px;font-size:17px;margin-top:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="mission"><span class="tag" data-t="mission"></span><span data-t="missionText"></span></div>
+
+  <!-- 0: camera on -->
+  <div class="panel center" id="s0">
+    <div style="font-size:80px">🐦🌊</div>
+    <h2 data-t="introTitle"></h2>
+    <p data-t="introText"></p>
+    <button class="btn pink big" id="camOn" data-t="camBtn"></button>
+    <div class="err hidden" id="camErr"></div>
+  </div>
+
+  <!-- 1: train -->
+  <div class="train hidden" id="s1">
+    <div class="panel">
+      <span class="step-label" data-t="step1"></span>
+      <div class="cam"><video id="video" autoplay playsinline muted></video>
+        <div class="count" id="count"><span id="countNum">3</span><small id="countMsg"></small></div></div>
+      <div class="meter"><b>🙌</b><div class="bar"><i class="up" id="mUp" style="width:50%"></i><i class="down" id="mDown" style="width:50%"></i></div><b>👇</b></div>
+      <p class="center muted" style="font-size:15px;margin-top:6px" data-t="meterHint"></p>
+    </div>
+    <div class="panel classes">
+      <div class="cls"><div class="pose">🙌</div><div>
+        <h3 data-t="upTitle"></h3><div class="n" id="nUp"></div>
+        <button class="btn cyan" data-rec="up" data-t="recBtn"></button></div></div>
+      <div class="cls"><div class="pose">👇</div><div>
+        <h3 data-t="downTitle"></h3><div class="n" id="nDown"></div>
+        <button class="btn orange" data-rec="down" data-t="recBtn"></button></div></div>
+      <p data-t="trainTip" style="font-size:16px"></p>
+      <div class="row">
+        <button class="btn pink big" id="play" data-t="playBtn" disabled></button>
+        <button class="btn small" id="clear" data-t="clearBtn"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2: game -->
+  <div class="hidden" id="s2">
+    <div class="gamebox">
+      <canvas id="cv" width="960" height="520"></canvas>
+      <div class="mini"><video id="video2" autoplay playsinline muted></video><div class="lab" id="lab"></div></div>
+    </div>
+    <div class="hud">
+      <div class="got" id="got"></div>
+      <button class="btn cyan" id="retrain" data-t="retrainBtn"></button>
+      <span class="muted" style="font-size:16px" data-t="gameTip"></span>
+    </div>
+  </div>
+</div>
+
+<script src="assets/common.js"></script>
+<script>
+const T = {
+  title: { en: "Pose Pilot", my: "ကိုယ်ဟန်နဲ့ ငှက်မောင်း" },
+  missionText: { en: "Teach the computer your moves, then fly the bird and collect 10 pieces of trash.",
+                 my: "ကွန်ပျူတာကို သင့်လှုပ်ရှားမှု သင်ပေးပြီး ငှက်ကို မောင်းကာ အမှိုက် ၁၀ ခု ကောက်ပါ။" },
+  introTitle: { en: "Your body is the controller!", my: "သင့်ခန္ဓာကိုယ်က ထိန်းချုပ်ခလုတ်ပါ!" },
+  introText: { en: "First you teach the computer two poses. Then it uses them to fly the bird. Stand about 1–2 steps back from the laptop.",
+               my: "အရင်ဆုံး ကွန်ပျူတာကို ကိုယ်ဟန် ၂ မျိုး သင်ပေးပါ။ ပြီးရင် အဲဒါနဲ့ ငှက်ကို မောင်းမယ်။ Laptop နဲ့ ခြေလှမ်း ၁–၂ လှမ်း ခွာပြီး ရပ်ပါ။" },
+  camBtn: { en: "📷 Turn on camera", my: "📷 ကင်မရာ ဖွင့်မယ်" },
+  step1: { en: "STEP 1 · TEACH THE COMPUTER", my: "အဆင့် ၁ · ကွန်ပျူတာကို သင်ပေးပါ" },
+  upTitle: { en: "Arms UP = fly up", my: "လက်မြှောက် = အပေါ်ပျံ" },
+  downTitle: { en: "Arms DOWN = dive", my: "လက်ချ = အောက်ဆင်း" },
+  recBtn: { en: "● Record this pose", my: "● ဒီကိုယ်ဟန် မှတ်မယ်" },
+  trainTip: { en: "Press record, get into the pose, and hold still. Record each pose 2 times. Move a little each time so the computer learns better.",
+              my: "မှတ်ခလုတ်နှိပ်၊ ကိုယ်ဟန်လုပ်ပြီး ငြိမ်ငြိမ်နေပါ။ ကိုယ်ဟန်တစ်ခုစီကို ၂ ခါ မှတ်ပါ။ တစ်ခါစီ နည်းနည်းရွှေ့ရင် ကွန်ပျူတာ ပိုသင်ယူနိုင်တယ်။" },
+  meterHint: { en: "After you record, try your poses. The bar shows what the computer thinks.",
+               my: "မှတ်ပြီးရင် ကိုယ်ဟန်တွေ စမ်းကြည့်ပါ။ ကွန်ပျူတာ ဘာထင်လဲ ဘားက ပြတယ်။" },
+  playBtn: { en: "▶ Fly!", my: "▶ ပျံမယ်!" },
+  clearBtn: { en: "↺ Start teaching again", my: "↺ အစက ပြန်သင်မယ်" },
+  retrainBtn: { en: "🧠 Teach it more", my: "🧠 ထပ်သင်ပေးမယ်" },
+  gameTip: { en: "If the bird goes the wrong way, the computer needs better teaching!",
+             my: "ငှက်က လမ်းမှားသွားရင် ကွန်ပျူတာကို ပိုကောင်းကောင်း သင်ပေးဖို့ လိုတယ်!" }
+};
+
+/* ---------------- tiny "AI": k-nearest neighbours on low-res camera frames ---------------- */
+const W = 24, H = 18, K = 7;
+const grab = document.createElement("canvas"); grab.width = W; grab.height = H;
+const gctx = grab.getContext("2d", { willReadFrequently: true });
+const samples = { up: [], down: [] };
+const video = document.getElementById("video"), video2 = document.getElementById("video2");
+let stream = null, recording = false;
+
+function features(v) {
+  gctx.drawImage(v, 0, 0, W, H);
+  const d = gctx.getImageData(0, 0, W, H).data;
+  const f = new Float32Array(W * H);
+  let mean = 0;
+  for (let i = 0; i < W * H; i++) { f[i] = 0.3 * d[i * 4] + 0.59 * d[i * 4 + 1] + 0.11 * d[i * 4 + 2]; mean += f[i]; }
+  mean /= W * H;
+  let norm = 0;
+  for (let i = 0; i < f.length; i++) { f[i] -= mean; norm += f[i] * f[i]; }
+  norm = Math.sqrt(norm) || 1;
+  for (let i = 0; i < f.length; i++) f[i] /= norm;
+  return f;
+}
+function dist(a, b) { let s = 0; for (let i = 0; i < a.length; i++) { const x = a[i] - b[i]; s += x * x; } return s; }
+function predict(v) {
+  if (!samples.up.length || !samples.down.length || !v.videoWidth) return null;
+  const f = features(v);
+  const all = [];
+  samples.up.forEach(s => all.push([dist(f, s), 1]));
+  samples.down.forEach(s => all.push([dist(f, s), 0]));
+  all.sort((a, b) => a[0] - b[0]);
+  const k = Math.min(K, all.length);
+  let up = 0; for (let i = 0; i < k; i++) up += all[i][1];
+  return up / k; // 1 = surely UP, 0 = surely DOWN
+}
+
+/* ---------------- screens ---------------- */
+function show(id) { ["s0", "s1", "s2"].forEach(s => document.getElementById(s).classList.toggle("hidden", s !== id)); }
+
+document.getElementById("camOn").onclick = async () => {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480, facingMode: "user" }, audio: false });
+    video.srcObject = stream; video2.srcObject = stream;
+    show("s1"); drawCounts(); meterLoop();
+  } catch (e) {
+    const err = document.getElementById("camErr");
+    err.classList.remove("hidden");
+    err.innerHTML = L({
+      en: "The camera did not turn on. Ask the volunteer to check that the camera is allowed in the browser (the camera icon in the address bar), then reload the page.",
+      my: "ကင်မရာ မပွင့်ပါ။ Browser မှာ ကင်မရာ ခွင့်ပြုထားလား (address bar က ကင်မရာ icon) စစ်ဖို့ စေတနာ့ဝန်ထမ်းကို ပြောပြီး စာမျက်နှာကို ပြန်ဖွင့်ပါ။"
+    }) + `<br><small>${e.name || ""}</small>`;
+  }
+};
+
+function drawCounts() {
+  document.getElementById("nUp").textContent = L({ en: `${samples.up.length} pictures learned`, my: `ပုံ ${samples.up.length} ပုံ သင်ယူပြီး` });
+  document.getElementById("nDown").textContent = L({ en: `${samples.down.length} pictures learned`, my: `ပုံ ${samples.down.length} ပုံ သင်ယူပြီး` });
+  document.getElementById("play").disabled = samples.up.length < 20 || samples.down.length < 20;
+}
+
+document.querySelectorAll("[data-rec]").forEach(b => b.onclick = async () => {
+  if (recording) return;
+  recording = true;
+  const cls = b.dataset.rec;
+  const ov = document.getElementById("count"), num = document.getElementById("countNum"), msg = document.getElementById("countMsg");
+  ov.classList.add("show");
+  msg.textContent = cls === "up" ? L({ en: "🙌 Arms UP!", my: "🙌 လက်မြှောက်!" }) : L({ en: "👇 Arms DOWN!", my: "👇 လက်ချ!" });
+  for (const n of ["3", "2", "1"]) { num.textContent = n; await sleep(800); }
+  num.textContent = "📸";
+  for (let i = 0; i < 30; i++) { samples[cls].push(features(video)); await sleep(60); }
+  ov.classList.remove("show");
+  recording = false;
+  drawCounts();
+});
+document.getElementById("clear").onclick = () => { samples.up = []; samples.down = []; drawCounts(); };
+
+function meterLoop() {
+  if (!document.getElementById("s1").classList.contains("hidden") && !recording) {
+    const p = predict(video);
+    const up = p === null ? 50 : Math.round(p * 100);
+    document.getElementById("mUp").style.width = up + "%";
+    document.getElementById("mDown").style.width = (100 - up) + "%";
+  }
+  requestAnimationFrame(meterLoop);
+}
+
+/* ---------------- the game ---------------- */
+const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+const TRASH = ["🥤", "🧴", "🛍️", "🥫", "🍾", "📦"];
+const GOAL = 10;
+let bird, items, got, running = false, frame = 0, smooth = 0.5;
+
+function resetGame() { bird = { y: cv.height / 2, vy: 0 }; items = []; got = 0; frame = 0; drawGot(); }
+function drawGot() { document.getElementById("got").textContent = `🗑️ ${got} / ${GOAL}`; }
+
+function spawn() {
+  items.push({ x: cv.width + 40, y: 70 + Math.random() * (cv.height - 140), e: TRASH[Math.floor(Math.random() * TRASH.length)], bob: Math.random() * 6 });
+}
+
+function drawScene() {
+  const sea = cv.height * 0.55;
+  const sky = ctx.createLinearGradient(0, 0, 0, sea);
+  sky.addColorStop(0, "#8EDBF7"); sky.addColorStop(1, "#D8F3FC");
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, cv.width, sea);
+  ctx.fillStyle = "#FFD23F"; ctx.beginPath(); ctx.arc(cv.width - 90, 70, 42, 0, Math.PI * 2); ctx.fill();
+  const water = ctx.createLinearGradient(0, sea, 0, cv.height);
+  water.addColorStop(0, "#22AED6"); water.addColorStop(1, "#1D2766");
+  ctx.fillStyle = water; ctx.fillRect(0, sea, cv.width, cv.height - sea);
+  ctx.strokeStyle = "rgba(255,255,255,.5)"; ctx.lineWidth = 3;
+  for (let r = 0; r < 3; r++) {
+    ctx.beginPath();
+    for (let x = 0; x <= cv.width; x += 10) {
+      const y = sea + 20 + r * 60 + Math.sin((x + frame * 2 + r * 40) / 40) * 6;
+      x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  }
+}
+
+function loop() {
+  if (!running) return;
+  frame++;
+  const p = predict(video2);
+  if (p !== null) smooth = smooth * 0.7 + p * 0.3;
+  const push = (smooth - 0.5) * 2; // -1..1
+  bird.vy = bird.vy * 0.8 + (-push * 7) * 0.2;
+  bird.y = Math.max(40, Math.min(cv.height - 40, bird.y + bird.vy));
+  document.getElementById("lab").textContent = smooth > 0.6 ? "🙌 UP" : smooth < 0.4 ? "👇 DOWN" : "…";
+
+  if (frame % 75 === 0) spawn();
+  items.forEach(it => it.x -= 3.2);
+  items = items.filter(it => {
+    if (Math.hypot(it.x - 160, it.y - bird.y) < 52) { got++; drawGot(); return false; }
+    return it.x > -50;
+  });
+
+  drawScene();
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.font = "44px serif";
+  items.forEach(it => ctx.fillText(it.e, it.x, it.y + Math.sin((frame + it.bob * 20) / 12) * 4));
+  ctx.save(); ctx.translate(160, bird.y); ctx.scale(-1, 1); ctx.rotate(Math.max(-.4, Math.min(.4, -bird.vy / 14)));
+  ctx.font = "64px serif"; ctx.fillText("🐦", 0, 0); ctx.restore();
+
+  if (got >= GOAL) {
+    running = false;
+    showWin("pose", {
+      en: "You trained a real machine-learning model! The computer compared what the camera saw with the pictures you taught it. Bad teaching = a confused bird.",
+      my: "သင် machine learning model အစစ်တစ်ခုကို သင်ပေးလိုက်တာပါ! ကင်မရာမြင်တာကို သင်သင်ပေးထားတဲ့ ပုံတွေနဲ့ ကွန်ပျူတာက နှိုင်းယှဉ်တယ်။ မှားသင်ရင် ငှက်လည်း ရှုပ်ထွေးမှာပါ။"
+    }, "🐦");
+    return;
+  }
+  requestAnimationFrame(loop);
+}
+
+document.getElementById("play").onclick = () => {
+  show("s2");
+  if (!bird) { resetGame(); spawn(); }   // keep the score if they come back from "Teach it more"
+  running = true; loop();
+};
+document.getElementById("retrain").onclick = () => { running = false; show("s1"); };
+
+buildTopbar(T, "title", () => { if (stream) drawCounts(); });
+</script>
+</body>
+</html>
