@@ -1,0 +1,98 @@
+@font-face{font-family:"Fredoka";src:url(fonts/fredoka-latin-500-normal.woff2) format("woff2");font-weight:500;font-display:swap}
+@font-face{font-family:"Fredoka";src:url(fonts/fredoka-latin-700-normal.woff2) format("woff2");font-weight:700;font-display:swap}
+@font-face{font-family:"NotoMM";src:url(fonts/noto-sans-myanmar-myanmar-400-normal.woff2) format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"NotoMM";src:url(fonts/noto-sans-myanmar-myanmar-700-normal.woff2) format("woff2");font-weight:700;font-display:swap}
+
+:root{
+  --mustard:#C9A314;
+  --mustard-deep:#A8870C;
+  --ink:#1D2766;
+  --ink-soft:#3A4590;
+  --pink:#E5307A;
+  --cyan:#22AED6;
+  --green:#3BB273;
+  --orange:#F28C28;
+  --red:#E04343;
+  --paper:#FFFDF5;
+  --cream:#FFF3C4;
+  --line:#1D2766;
+  --radius:18px;
+  --font:"Fredoka","NotoMM","Pyidaungsu","Myanmar Text","Noto Sans Myanmar","Padauk",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{
+  font-family:var(--font);font-weight:500;color:var(--ink);
+  background:var(--mustard);
+  background-image:
+    linear-gradient(rgba(255,255,255,.07) 2px,transparent 2px),
+    linear-gradient(90deg,rgba(255,255,255,.07) 2px,transparent 2px);
+  background-size:48px 48px;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+body[data-lang="my"]{line-height:1.75}
+button{font-family:inherit}
+
+/* ---------- top bar ---------- */
+.topbar{display:flex;align-items:center;gap:14px;padding:12px 20px;color:#fff}
+.topbar .home{display:inline-flex;align-items:center;gap:8px;background:rgba(29,39,102,.9);color:#fff;text-decoration:none;
+  padding:8px 16px;border-radius:999px;font-weight:700;font-size:16px}
+.topbar .home:hover{background:var(--ink)}
+.topbar h1{margin:0;font-size:clamp(20px,2.6vw,30px);font-weight:700;letter-spacing:.3px;text-shadow:0 2px 0 rgba(0,0,0,.15);flex:1}
+.lang{display:inline-flex;background:rgba(29,39,102,.9);border-radius:999px;padding:4px}
+.lang button{border:0;background:transparent;color:#fff;font-weight:700;font-size:15px;padding:6px 14px;border-radius:999px;cursor:pointer}
+.lang button.on{background:#fff;color:var(--ink)}
+
+/* ---------- layout ---------- */
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px 28px}
+.panel{background:var(--paper);border:3px solid var(--line);border-radius:var(--radius);box-shadow:0 6px 0 var(--ink);padding:22px}
+.mission{display:flex;gap:14px;align-items:center;background:var(--ink);color:#fff;border-radius:14px;padding:12px 18px;margin-bottom:16px;font-size:18px}
+.mission .tag{background:var(--pink);border-radius:8px;padding:3px 10px;font-weight:700;font-size:14px;white-space:nowrap}
+.step-label{display:inline-block;background:var(--cyan);color:#fff;font-weight:700;border-radius:8px;padding:3px 12px;font-size:15px;margin-bottom:8px}
+h2{margin:0 0 8px;font-size:26px}
+p{margin:0 0 10px;font-size:18px}
+
+/* ---------- buttons ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:3px solid var(--line);border-radius:14px;
+  background:#fff;color:var(--ink);font-size:20px;font-weight:700;padding:12px 22px;cursor:pointer;
+  box-shadow:0 5px 0 var(--ink);transition:transform .06s, box-shadow .06s}
+.btn:active{transform:translateY(4px);box-shadow:0 1px 0 var(--ink)}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:0 5px 0 var(--ink)}
+.btn.pink{background:var(--pink);color:#fff}
+.btn.cyan{background:var(--cyan);color:#fff}
+.btn.green{background:var(--green);color:#fff}
+.btn.orange{background:var(--orange);color:#fff}
+.btn.ink{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn.big{font-size:24px;padding:16px 30px}
+.btn.small{font-size:16px;padding:8px 14px;box-shadow:0 3px 0 var(--ink)}
+
+/* ---------- pixel decoration ---------- */
+.pixels{position:fixed;pointer-events:none;z-index:0}
+.pixels i{position:absolute;width:18px;height:18px}
+.wrap,.topbar{position:relative;z-index:1}
+
+/* ---------- win overlay ---------- */
+.win{position:fixed;inset:0;background:rgba(29,39,102,.82);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.win.show{display:flex}
+.win .card{background:var(--paper);border:4px solid var(--ink);border-radius:24px;box-shadow:0 10px 0 var(--pink);max-width:560px;width:100%;
+  text-align:center;padding:30px 26px;animation:pop .35s ease-out}
+.win .card .big-emoji{font-size:64px;line-height:1}
+.win h2{font-size:32px;margin:8px 0}
+.win .learned{background:var(--cream);border-radius:12px;padding:12px 14px;font-size:18px;margin:12px 0 16px;text-align:left}
+.win .codebox{background:var(--ink);color:#fff;border-radius:14px;padding:12px;margin:0 0 18px}
+.win .codebox small{display:block;font-size:15px;opacity:.85}
+.win .codebox b{display:block;font-size:44px;letter-spacing:4px;color:#FFE16A}
+@keyframes pop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+
+.confetti{position:fixed;top:-20px;width:12px;height:12px;z-index:60;pointer-events:none;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+
+.hidden{display:none !important}
+.center{text-align:center}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.muted{opacity:.7}
+
+.promo-line{background:var(--cream);border:2px dashed var(--pink);border-radius:12px;padding:10px 12px;font-size:17px;margin:0 0 16px}
+.promo-line small{display:block;font-size:14px;opacity:.75;margin-top:4px}
+.credit{position:relative;z-index:1;text-align:center;color:#fff;font-size:14px;opacity:.9;padding:4px 0 16px}
